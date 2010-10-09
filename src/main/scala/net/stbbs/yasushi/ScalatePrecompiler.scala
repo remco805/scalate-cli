@@ -28,7 +28,7 @@ object ScalatePrecompiler {
 
     val paths = sources.flatMap(sd => collect(sd, "", engine.codeGenerators.keySet))
 
-    logger.info("Precompiling Scalate Templates into Scala soruces...")
+    logger.info("Precompiling Scalate Templates into Scala sources...")
 
     for ((uri, file) <- paths) {
       logger.info("    processing {} (uri: {})", file, uri)
