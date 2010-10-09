@@ -31,12 +31,13 @@ object ScalatePrecompiler {
     logger.info("Precompiling Scalate Templates into Scala sources...")
 
     for ((uri, file) <- paths) {
-      logger.info("    processing {} (uri: {})", file, uri)
-
-      val code = engine.generateScala(TemplateSource.fromFile(file, uri), createBindingsForPath(uri))
       val sourceFile = new File(output, uri.replace(':', '_') + ".scala")
-      sourceFile.getParentFile.mkdirs
-      IOUtil.writeBinaryFile(sourceFile, code.source.getBytes("UTF-8"))
+      if (changed(file, sourceFile)) {
+        logger.info("    processing {} (uri: {})", file, uri)
+        val code = engine.generateScala(TemplateSource.fromFile(file, uri), createBindingsForPath(uri))
+        sourceFile.getParentFile.mkdirs
+        IOUtil.writeBinaryFile(sourceFile, code.source.getBytes("UTF-8"))
+      }
     }
   }
 
@@ -54,5 +55,8 @@ object ScalatePrecompiler {
   def createBindings(): List[Binding] =
     List(Binding("context", classOf[ServletRenderContext].getName, true, isImplicit = true))
   def createBindingsForPath(uri:String): List[Binding] = Nil
+
+  def changed(template: File, source: File) =
+    !(source.exists && template.lastModified < source.lastModified)
 
 }
