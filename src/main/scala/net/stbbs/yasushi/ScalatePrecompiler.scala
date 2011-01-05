@@ -2,18 +2,49 @@ package net.stbbs.yasushi
 
 import java.io.File
 import org.slf4j.LoggerFactory
-import org.fusesource.scalate.{TemplateSource, Binding, TemplateEngine}
+import org.fusesource.scalate.Binding
+import org.fusesource.scalate.DefaultRenderContext
+import org.fusesource.scalate.TemplateEngine
+import org.fusesource.scalate.TemplateSource
 import org.fusesource.scalate.servlet.ServletRenderContext
 import org.fusesource.scalate.support.FileResourceLoader
 import org.fusesource.scalate.util.IOUtil
 
+import org.github.scopt.OptionParser
+
+import scala.collection.mutable.ListBuffer
+
+object config {
+  var useServlet = false
+  var output:File = _
+  var sources:ListBuffer[File] = ListBuffer()
+
+  def valid = {
+    val result =
+      output != null
+    if (!result)
+      System.err.println("Error: missing arguments: -o")
+    result
+  }
+}
+
 object ScalatePrecompiler {
   val logger = LoggerFactory.getLogger("ScalateCli")
-  def main(args: Array[String]) {
-    assert(args.size >= 2, "invalid argument")
 
-    val output = new File(args.head)
-    val sources = args.drop(1).map(new File(_))
+  def parse(args: Array[String]) {
+    val parser = new OptionParser("ScalatePrecompiler") {
+      opt("servlet", "use ServletRenderContext instead of DefaultRenderContext", {config.useServlet = true})
+      opt("o", "output", "<output directory>","", {s: String => config.output=new File(s)})
+      arglist("<source directory>...", "", {s: String => config.sources += new File(s)})
+    }
+    if (!parser.parse(args) || !config.valid)
+      exit
+  }
+
+  def main(args: Array[String]) {
+    parse(args)
+
+    import config._
 
     logger.debug("outputDirectory: {}", output)
     logger.debug("sourceDirectories: {}", sources)
@@ -52,8 +83,14 @@ object ScalatePrecompiler {
       Map.empty
   }
 
+  lazy val renderContextClassName =
+    if (config.useServlet)
+      classOf[ServletRenderContext].getName
+    else
+      classOf[DefaultRenderContext].getName
+
   def createBindings(): List[Binding] =
-    List(Binding("context", classOf[ServletRenderContext].getName, true, isImplicit = true))
+    List(Binding("context", renderContextClassName, true, isImplicit = true))
   def createBindingsForPath(uri:String): List[Binding] = Nil
 
   def changed(template: File, source: File) =
