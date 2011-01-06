@@ -7,7 +7,7 @@ import org.fusesource.scalate.DefaultRenderContext
 import org.fusesource.scalate.TemplateEngine
 import org.fusesource.scalate.TemplateSource
 import org.fusesource.scalate.servlet.ServletRenderContext
-import org.fusesource.scalate.support.FileResourceLoader
+import org.fusesource.scalate.util.FileResourceLoader
 import org.fusesource.scalate.util.IOUtil
 
 import org.github.scopt.OptionParser
